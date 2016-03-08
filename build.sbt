@@ -14,14 +14,15 @@ lazy val testScalastyle = taskKey[Unit]("testScalastyle")
 
 lazy val commonSettings = Seq(
   organization := "com.memsql",
-  version := "1.2.2",
-  scalaVersion := "2.10.5",
+  version := "storygize-1.2.2",
+  scalaVersion := "2.11.7",
   assemblyScalastyle := org.scalastyle.sbt.ScalastylePlugin.scalastyle.in(Compile).toTask("").value,
   assembly <<= assembly dependsOn assemblyScalastyle,
   testScalastyle := org.scalastyle.sbt.ScalastylePlugin.scalastyle.in(Test).toTask("").value,
   (test in Test) <<= (test in Test) dependsOn testScalastyle,
   parallelExecution in Test := false,
-  publishTo := {
+  publishTo := Some(Resolver.file("file",  new File(Path.userHome.absolutePath+"/.m2/repository"))),
+/*  publishTo := {
     val nexus = "https://oss.sonatype.org/"
     if (isSnapshot.value) {
       Some("snapshots" at nexus + "content/repositories/snapshots")
@@ -29,6 +30,7 @@ lazy val commonSettings = Seq(
       Some("releases" at nexus + "service/local/staging/deploy/maven2")
     }
   },
+*/
   pomExtra := {
     <url>http://memsql.github.io/spark-streamliner</url>
     <licenses>
