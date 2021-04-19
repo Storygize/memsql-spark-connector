@@ -106,7 +106,7 @@ class LoadDataWriterFactory(table: TableIdentifier, conf: SinglestoreOptions)
           case _     => ""
         }
     }
-    val maxErrorsPart      = s"MAX_ERRORS ${conf.maxErrors}"
+    val maxErrorsPart      = ""
     var avroSchema: Schema = null
     val queryPrefix        = s"LOAD DATA LOCAL INFILE '###.$ext'"
     val queryEnding = if (loadDataFormat == SinglestoreOptions.LoadDataFormat.Avro) {
