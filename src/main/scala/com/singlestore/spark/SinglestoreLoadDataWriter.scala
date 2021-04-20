@@ -74,6 +74,10 @@ class LoadDataWriterFactory(table: TableIdentifier, conf: SinglestoreOptions)
 
     def tempColName(colName: String) = s"@${colName}_tmp"
 
+    if (schema.exists(_.dataType == BinaryType)) {
+      throw new RuntimeException("Binary data types not supported on the Storygize fork")
+    }
+
     val columnNames = schema.map(s =>
       if (s.dataType == BinaryType) {
         tempColName(s.name)
@@ -82,19 +86,18 @@ class LoadDataWriterFactory(table: TableIdentifier, conf: SinglestoreOptions)
     })
 
     val loadDataFormat = conf.loadDataFormat
-    val querySetPart =
-      if (loadDataFormat == SinglestoreOptions.LoadDataFormat.Avro) ""
-      else {
-        val binaryColumns = schema.filter(_.dataType == BinaryType)
-        if (binaryColumns.isEmpty) {
-          ""
-        } else {
-          val operations = binaryColumns
-            .map(s =>
-              s"${SinglestoreDialect.quoteIdentifier(s.name)} = FROM_BASE64(${tempColName(s.name)})")
-          s"SET ${operations.mkString(", ")}"
-        }
-      }
+//    val querySetPart =
+//      if (loadDataFormat == SinglestoreOptions.LoadDataFormat.Avro) ""
+//      else {
+//        val binaryColumns = schema.filter(_.dataType == BinaryType)
+//        if (binaryColumns.isEmpty) {
+//          ""
+//        } else {
+//          val operations = binaryColumns
+//            .map(s => s"${s.name} = FROM_BASE64(${tempColName(s.name)})")
+//          s"SET ${operations.mkString(", ")}"
+//        }
+//      }
 
     val queryErrorHandlingPart = mode match {
       // If SaveMode is Ignore - skip all duplicate key errors
@@ -131,8 +134,10 @@ class LoadDataWriterFactory(table: TableIdentifier, conf: SinglestoreOptions)
       s"INTO TABLE ${table.quotedString} (${columnNames.mkString(", ")})"
     }
     val query =
-      List[String](queryPrefix, queryErrorHandlingPart, queryEnding, querySetPart, maxErrorsPart)
-        .filter(s => !s.isEmpty)
+      List[String](queryPrefix,
+                   queryErrorHandlingPart,
+                   queryEnding, /* querySetPart, */ maxErrorsPart)
+        .filter(s => s.nonEmpty)
         .mkString(" ")
 
     val conn = JdbcUtils.createConnectionFactory(
